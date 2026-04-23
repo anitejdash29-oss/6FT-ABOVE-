@@ -1,38 +1,4 @@
 # 6FT-ABOVE-
 FINAL PROJECT 
 
-package com.java;
 
-import java.net.MalformedURLException;
-import java.util.Scanner;
-
-public class URL {
-    public static void main(String[] args) {
-    Scanner scanner = new Scanner(System.in);
-    
-    System.out.println("Enter your URL: ");
-    String inputUrl = scanner.nextLine();
-
-    // Fix: Add protocol if missing
-    if (!inputUrl.startsWith("http://") && !inputUrl.startsWith("https://")) {
-           inputUrl = "https://" + inputUrl;
-        }
-
-        try {
-            java.net.URL url = new java.net.URL(inputUrl);
-
-            System.out.println("Protocol: " + url.getProtocol());
-            System.out.println("Host: " + url.getHost());
-            System.out.println("Port: " + url.getPort());
-            System.out.println("Path: " + url.getPath());
-            System.out.println("Query: " + url.getQuery());
-            System.out.println("File: " + url.getFile());
-            System.out.println("Ref: " + url.getRef());
-
-        } catch (MalformedURLException e) {
-            System.out.println("Invalid URL. Please enter a valid link.");
-        }
-
-        scanner.close();
-    }
-}
