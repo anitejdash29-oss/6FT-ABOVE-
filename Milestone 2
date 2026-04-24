@@ -1,3 +1,38 @@
-//score the website
-package .com java
+package com.java;
+
+import java.util.Scanner;
+
+public class URLAnalyzer {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Enter your URL: ");
+        String inputUrl = scanner.nextLine();
+
+      
+        if (!inputUrl.startsWith("http://") && !inputUrl.startsWith("https://")) {
+            inputUrl = "https://" + inputUrl;
+        }
+
+       
+        Source source = new Source(inputUrl);
+
+        source.process();
+
+        System.out.println("\n===== RESULTS =====");
+        System.out.println("Author: " + source.getAuthor());
+        System.out.println("Credibility Score: " + source.getScore() + "/100");
+
+        if (source.getScore() >= 75) {
+            System.out.println("Rating: Highly Credible");
+        } else if (source.getScore() >= 50) {
+            System.out.println("Rating: Moderately Credible");
+        } else {
+            System.out.println("Rating: Low Credibility");
+        }
+
+        scanner.close();
+    }
+}
+
 
