@@ -1,5 +1,5 @@
 //URL Upload
-package com.java;
+package com.example;
 
 import java.net.MalformedURLException;
 import java.util.Scanner;
