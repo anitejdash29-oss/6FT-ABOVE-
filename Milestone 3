@@ -1,0 +1,118 @@
+package com.java;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.io.PrintWriter;
+
+public class Source {
+    private String urlString;
+    private int score;
+    private String author;
+
+    public Source(String urlString) {
+        this.urlString = urlString;
+        this.score = 50; // Base score
+        this.author = "Unknown";
+    }
+
+    // Main processing method
+    public void process() {
+        checkDomain();
+        checkKeywords();
+        checkHTTPS();
+        extractAuthor();
+        normalizeScore();
+        saveIfFlagged();
+    }
+
+    // Domain-based scoring
+    private void checkDomain() {
+        try {
+            URL url = new URL(urlString);
+            String host = url.getHost();
+
+            if (host.endsWith(".gov") || host.endsWith(".edu")) {
+                score += 30;
+            } else if (host.endsWith(".org")) {
+                score += 10;
+            } else if (host.endsWith(".net")) {
+                score += 5;
+            } else if (host.endsWith(".xyz") || host.endsWith(".click")) {
+                score -= 20;
+            }
+
+        } catch (Exception e) {
+            score -= 20;
+        }
+    }
+
+    // Keyword scanning
+    private void checkKeywords() {
+        String[] flaggedWords = {"fake", "clickbait", "shocking", "free", "win", "urgent"};
+
+        for (String word : flaggedWords) {
+            if (urlString.toLowerCase().contains(word)) {
+                score -= 5;
+            }
+        }
+    }
+
+    // HTTPS bonus
+    private void checkHTTPS() {
+        if (urlString.startsWith("https://")) {
+            score += 10;
+        }
+    }
+
+    // Extract author (basic HTML scan)
+    private void extractAuthor() {
+        try {
+            URL url = new URL(urlString);
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(url.openStream())
+            );
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.toLowerCase().contains("author")) {
+                    author = line.replaceAll("<.*?>", "").trim();
+                    break;
+                }
+            }
+
+            reader.close();
+
+        } catch (Exception e) {
+            author = "Could not retrieve";
+        }
+    }
+
+    // Keep score between 0–100
+    private void normalizeScore() {
+        if (score > 100) score = 100;
+        if (score < 0) score = 0;
+    }
+
+    // Save low-credibility sites
+    private void saveIfFlagged() {
+        if (score < 50) {
+            try {
+                PrintWriter writer = new PrintWriter("flagged.txt");
+                writer.println(urlString);
+                writer.close();
+            } catch (Exception e) {
+                System.out.println("Could not save flagged site.");
+            }
+        }
+    }
+
+    // Getters
+    public int getScore() {
+        return score;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+}
