@@ -67,47 +67,82 @@ public class Source {
     }
 
 private void extractAuthor() {
+    BufferedReader reader = null;
+
     try {
         URL url = new URL(urlString);
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(url.openStream())
-        );
+        reader = new BufferedReader(new InputStreamReader(url.openStream()));
 
         String line;
-        while ((line = reader.readLine()) != null) {
+        int lineCount = 0;
+
+        while ((line = reader.readLine()) != null && lineCount < 200) { // limit scan
+            lineCount++;
             String lower = line.toLowerCase();
 
-            // ✅ 1. Check for meta author tag (most reliable)
-            if (lower.contains("meta") && lower.contains("author")) {
-                int contentIndex = lower.indexOf("content=");
+            // ✅ 1. META TAG (handles " and ')
+            if (lower.contains("<meta") && lower.contains("author")) {
+                int contentIndex = lower.indexOf("content");
                 if (contentIndex != -1) {
+
+                    // Find first quote (either " or ')
                     int start = line.indexOf("\"", contentIndex);
-                    int end = line.indexOf("\"", start + 1);
-                    if (start != -1 && end != -1) {
-                        author = line.substring(start + 1, end).trim();
-                        break;
+                    if (start == -1) {
+                        start = line.indexOf("'", contentIndex);
+                    }
+
+                    if (start != -1) {
+                        char quoteType = line.charAt(start);
+                        int end = line.indexOf(quoteType, start + 1);
+
+                        if (end != -1) {
+                            author = line.substring(start + 1, end).trim();
+                            break;
+                        }
                     }
                 }
             }
 
-            // ✅ 2. Look for "By [Name]" pattern
-            if (lower.contains("by ")) {
-                String cleaned = line.replaceAll("<.*?>", "").trim();
+            // ✅ 2. STRICT "By Name" pattern
+            String cleaned = line.replaceAll("<.*?>", "").trim();
 
-                // Basic filter to avoid garbage lines
-                if (cleaned.length() < 100 && cleaned.toLowerCase().startsWith("by ")) {
-                    author = cleaned.substring(3).trim();
-                    break;
+            if (cleaned.length() > 3 && cleaned.length() < 60) {
+                if (cleaned.toLowerCase().startsWith("by ")) {
+                    String possibleAuthor = cleaned.substring(3).trim();
+
+                    // Avoid junk like "By clicking here"
+                    if (!possibleAuthor.toLowerCase().contains("click")
+                            && !possibleAuthor.toLowerCase().contains("using")) {
+
+                        author = possibleAuthor;
+                        break;
+                    }
                 }
             }
         }
 
-        reader.close();
-
     } catch (Exception e) {
         author = "Could not retrieve";
+    } finally {
+        try {
+            if (reader != null) reader.close();
+        } catch (Exception e) {
+            // ignore
+        }
     }
 
+    // ✅ Final cleanup
+    if (author == null || author.equals("") || author.length() > 60) {
+        author = "Unknown";
+    }
+
+    // ✅ OPTIONAL: add to score (highly recommended)
+    if (!author.equals("Unknown") && !author.equals("Could not retrieve")) {
+        score += 10;
+    } else {
+        score -= 5;
+    }
+}
     // Final fallback
     if (author == null || author.equals("") || author.length() > 100) {
         author = "Unknown";
