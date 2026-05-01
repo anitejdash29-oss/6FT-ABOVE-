@@ -66,28 +66,53 @@ public class Source {
         }
     }
 
-    // Extract author (basic HTML scan)
-    private void extractAuthor() {
-        try {
-            URL url = new URL(urlString);
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(url.openStream())
-            );
+private void extractAuthor() {
+    try {
+        URL url = new URL(urlString);
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(url.openStream())
+        );
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.toLowerCase().contains("author")) {
-                    author = line.replaceAll("<.*?>", "").trim();
-                    break;
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String lower = line.toLowerCase();
+
+            // ✅ 1. Check for meta author tag (most reliable)
+            if (lower.contains("meta") && lower.contains("author")) {
+                int contentIndex = lower.indexOf("content=");
+                if (contentIndex != -1) {
+                    int start = line.indexOf("\"", contentIndex);
+                    int end = line.indexOf("\"", start + 1);
+                    if (start != -1 && end != -1) {
+                        author = line.substring(start + 1, end).trim();
+                        break;
+                    }
                 }
             }
 
-            reader.close();
+            // ✅ 2. Look for "By [Name]" pattern
+            if (lower.contains("by ")) {
+                String cleaned = line.replaceAll("<.*?>", "").trim();
 
-        } catch (Exception e) {
-            author = "Could not retrieve";
+                // Basic filter to avoid garbage lines
+                if (cleaned.length() < 100 && cleaned.toLowerCase().startsWith("by ")) {
+                    author = cleaned.substring(3).trim();
+                    break;
+                }
+            }
         }
+
+        reader.close();
+
+    } catch (Exception e) {
+        author = "Could not retrieve";
     }
+
+    // Final fallback
+    if (author == null || author.equals("") || author.length() > 100) {
+        author = "Unknown";
+    }
+}
 
     // Keep score between 0–100
     private void normalizeScore() {
